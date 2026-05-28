@@ -55,15 +55,12 @@ impl Tool for Cli {
             &mut stdout_lock
         };
         let seed = self.common.seed;
-        match self.input {
-            Some(ref p) => {
-                let f = File::open(p).map_err(RsomicsError::Io)?;
-                sample(f, out, self.num, seed)
-            }
-            None => {
-                let stdin = io::stdin();
-                sample(stdin.lock(), out, self.num, seed)
-            }
+        if let Some(ref p) = self.input {
+            let f = File::open(p).map_err(RsomicsError::Io)?;
+            sample(f, out, self.num, seed)
+        } else {
+            let stdin = io::stdin();
+            sample(stdin.lock(), out, self.num, seed)
         }
     }
 }
