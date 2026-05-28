@@ -1,0 +1,42 @@
+[package]
+name = "rsomics-bed-sample"
+version = "0.1.0"
+description = "Sample random BED records using reservoir sampling — bedtools sample equivalent"
+edition = "2024"
+rust-version = "1.91"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/omics-rust/rsomics-bed-sample"
+authors = ["Zane Leong <efd@live.com>"]
+categories = ["science", "command-line-utilities"]
+keywords = ["bed", "sample", "bedtools", "bioinformatics", "reservoir"]
+readme = "README.md"
+
+[[bin]]
+name = "rsomics-bed-sample"
+path = "src/main.rs"
+
+[lib]
+name = "rsomics_bed_sample"
+path = "src/lib.rs"
+doctest = false
+
+[dependencies]
+rsomics-common = { version = "0.6" }
+rsomics-help = { version = "0.3" }
+clap = { version = "4", features = ["derive"] }
+
+[dev-dependencies]
+criterion = { version = "0.7", default-features = false, features = ["cargo_bench_support"] }
+
+[[bench]]
+name = "bed_sample"
+harness = false
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+single_char_pattern = "warn"
