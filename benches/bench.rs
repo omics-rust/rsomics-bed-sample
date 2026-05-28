@@ -6,7 +6,10 @@ use std::process::Command;
 fn bench_bed_sample(c: &mut Criterion) {
     let bin = env!("CARGO_BIN_EXE_rsomics-bed-sample");
     let manifest = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let bed = manifest.parent().unwrap().join("rsomics-bed-merge/tests/golden/sorted.bed");
+    let bed = manifest
+        .parent()
+        .unwrap()
+        .join("rsomics-bed-merge/tests/golden/sorted.bed");
     c.bench_function("rsomics-bed-sample golden", |b| {
         b.iter(|| {
             let out = Command::new(black_box(bin))
