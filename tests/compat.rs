@@ -12,7 +12,7 @@ fn run(input: &str, n: usize, seed: Option<u64>) -> Vec<String> {
     String::from_utf8(out)
         .unwrap()
         .lines()
-        .map(|l| l.to_owned())
+        .map(std::borrow::ToOwned::to_owned)
         .collect()
 }
 

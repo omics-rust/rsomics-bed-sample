@@ -127,7 +127,7 @@ mod tests {
         String::from_utf8(out)
             .unwrap()
             .lines()
-            .map(|l| l.to_owned())
+            .map(str::to_owned)
             .collect()
     }
 
