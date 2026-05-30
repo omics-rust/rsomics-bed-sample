@@ -1,32 +1,12 @@
-//! Sample random BED records — `bedtools sample` equivalent.
+//! Sample random BED records — bedtools sample equivalent.
 //!
-//! Implements reservoir sampling (Vitter's Algorithm R) to draw an exact
-//! sample of `n` records from a BED stream without reading the entire file
-//! into memory first.  The implementation stores exactly `n` records in
-//! memory at any time; only the reservoir occupies RAM — not the whole file.
-//!
-//! ## Determinism
-//!
-//! Provide `--seed` to get reproducible output.  Without a seed the output
-//! is non-deterministic (but the count is always exactly `n`, or the full
-//! file if there are fewer than `n` records).
-//!
-//! ## Output order
-//!
-//! The sampled records are emitted in their original input order (by line
-//! number), not in sampling order.  This matches bedtools sample behaviour.
+//! Reservoir sampling (Vitter's Algorithm R): exactly `n` records in memory,
+//! output in original input order. Use `--seed` for reproducible results.
 
 use std::io::{BufRead, BufReader, Read, Write};
 
 use rsomics_common::{Result, RsomicsError};
 
-/// Sample up to `n` records from a BED stream `r`, writing to `w`.
-///
-/// Uses reservoir sampling (Vitter's Algorithm R).  Records are emitted in
-/// their original input order.  Header lines (`#`, `track`, `browser`) and
-/// blank lines are skipped before counting.
-///
-/// `seed`: `None` → non-deterministic; `Some(s)` → deterministic LCG-seeded.
 pub fn sample<R: Read, W: Write>(r: R, w: W, n: usize, seed: Option<u64>) -> Result<()> {
     if n == 0 {
         return Ok(());
@@ -41,7 +21,6 @@ pub fn sample<R: Read, W: Write>(r: R, w: W, n: usize, seed: Option<u64>) -> Res
             .map_or(12345, |d| d.subsec_nanos().into())
     }));
 
-    // Reservoir: (original_index, line_bytes).
     let mut reservoir: Vec<(usize, String)> = Vec::with_capacity(n);
     let mut count: usize = 0;
 
@@ -63,7 +42,6 @@ pub fn sample<R: Read, W: Write>(r: R, w: W, n: usize, seed: Option<u64>) -> Res
         if reservoir.len() < n {
             reservoir.push((count, line.trim_end_matches(['\n', '\r']).to_owned()));
         } else {
-            // Replace random element with probability n / (count + 1).
             let j = rng.next_usize(count + 1);
             if j < n {
                 reservoir[j] = (count, line.trim_end_matches(['\n', '\r']).to_owned());
@@ -72,7 +50,6 @@ pub fn sample<R: Read, W: Write>(r: R, w: W, n: usize, seed: Option<u64>) -> Res
         count += 1;
     }
 
-    // Sort by original input order before output.
     reservoir.sort_unstable_by_key(|(idx, _)| *idx);
 
     let mut bw = std::io::BufWriter::new(w);
@@ -84,8 +61,7 @@ pub fn sample<R: Read, W: Write>(r: R, w: W, n: usize, seed: Option<u64>) -> Res
     Ok(())
 }
 
-/// Minimal LCG (linear congruential generator) for reproducible reservoir sampling.
-/// Constants from Knuth's MMIX / Numerical Recipes.
+/// Constants from Knuth's MMIX.
 struct LcgRng {
     state: u64,
 }
@@ -105,11 +81,6 @@ impl LcgRng {
         self.state
     }
 
-    /// Returns a uniform random value in `0..max`.
-    ///
-    /// `max` must be ≤ `u64::MAX`; on platforms where `usize` is 32-bit the
-    /// result is silently truncated, but `max` (a reservoir index or record
-    /// count) is always < `usize::MAX` in practice.
     #[allow(clippy::cast_possible_truncation)]
     fn next_usize(&mut self, max: usize) -> usize {
         (self.next_u64() % (max as u64)) as usize

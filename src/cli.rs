@@ -13,10 +13,6 @@ pub const META: ToolMeta = ToolMeta {
     version: env!("CARGO_PKG_VERSION"),
 };
 
-/// Sample random BED records — bedtools sample equivalent.
-///
-/// Draws exactly n records from the input using reservoir sampling
-/// (Vitter's Algorithm R).  Output is in original input order.
 #[derive(Parser, Debug)]
 #[command(name = "rsomics-bed-sample", disable_help_flag = true)]
 pub struct Cli {
